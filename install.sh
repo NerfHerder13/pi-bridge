@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 BIFROST_IMAGE="maximhq/bifrost:v2.4.0"
 OLLAMA_IMAGE="ollama/ollama:0.40.14"
+HERDR_BASE_IMAGE="quay.io/rockylinux/rockylinux:9.8@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f"
 HERDR_APP_VERSION="0.1.13"
 HERDR_APP_COMMIT="93b097f6e29fcb2d90a30dea2f03ce4e5dee7981"
 HERDR_RUST_VERSION="1.95.0"
@@ -163,6 +164,7 @@ if [ "$(cat "$HERDR_APP_HOME/.build" 2>/dev/null)" = "$HERDR_APP_BUILD" ]; then
 else
   echo "Building the Herdr app in a Rocky Linux 9 container. The first build takes several minutes."
   docker build -t "$HERDR_IMAGE" -f "$ROOT/herdr/Containerfile" \
+    --build-arg BASE_IMAGE="$HERDR_BASE_IMAGE" \
     --build-arg RUSTUP_VERSION="$RUSTUP_VERSION" --build-arg RUSTUP_SHA256="$RUSTUP_SHA256" \
     --build-arg RUST_VERSION="$HERDR_RUST_VERSION" \
     --build-arg ZIG_VERSION="$HERDR_ZIG_VERSION" --build-arg ZIG_SHA256="$HERDR_ZIG_SHA256" \
