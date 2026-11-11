@@ -8,7 +8,8 @@
   "defaultProjectTrust": "never",
   "extensions": [
     "-builtin:llama.cpp",
-    "/home/rjack/.claude/pi/extensions/claude-hooks.ts"
+    "/home/rjack/.claude/pi/extensions/claude-hooks.ts",
+    "/home/rjack/.claude/pi/extensions/subagent"
   ],
   "lastChangelogVersion": "1.4.0",
   "defaultTools": [
