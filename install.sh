@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 BIFROST_IMAGE="maximhq/bifrost:v2.4.0"
 OLLAMA_IMAGE="ollama/ollama:0.40.14"
-HERDR_BASE_IMAGE="quay.io/rockylinux/rockylinux:9.8@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f"
 BASIC_MEMORY_IMAGE="ghcr.io/basicmachines-co/basic-memory:1.0.0"
 HERDR_APP_VERSION="0.1.13"
 HERDR_CORE_VERSION="0.1.18"

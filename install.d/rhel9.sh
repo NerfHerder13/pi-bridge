@@ -39,7 +39,6 @@ os_install_herdr() {
   else
     echo "Building the Herdr app in a Rocky Linux 9 container. The first build takes several minutes."
     docker build -t "$image" -f "$ROOT/herdr/Containerfile" \
-      --build-arg BASE_IMAGE="$HERDR_BASE_IMAGE" \
       --build-arg RUSTUP_VERSION="$RUSTUP_VERSION" --build-arg RUSTUP_SHA256="$RUSTUP_SHA256" \
       --build-arg RUST_VERSION="$HERDR_RUST_VERSION" \
       --build-arg ZIG_VERSION="$HERDR_ZIG_VERSION" --build-arg ZIG_SHA256="$HERDR_ZIG_SHA256" \

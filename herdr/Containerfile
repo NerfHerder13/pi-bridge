@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=quay.io/rockylinux/rockylinux:9.8@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
-FROM ${BASE_IMAGE}
+FROM quay.io/rockylinux/rockylinux:9.8@sha256:8101994123cf3d0a8fee517bee7f39e555c7d92bd2d9eb3303cc988a0eeed00f
 
 ARG RUSTUP_VERSION
 ARG RUSTUP_SHA256
