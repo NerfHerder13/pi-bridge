@@ -2,15 +2,19 @@
   "theme": "dark",
   "defaultProvider": "bifrost",
   "defaultModel": "claude-sub/claude-opus-5-5",
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "high",
   "enableInstallTelemetry": false,
   "enableAnalytics": false,
   "defaultProjectTrust": "never",
   "extensions": [
-    "-builtin:llama.cpp"
+    "-builtin:llama.cpp",
+    "/home/rjack/.claude/pi/extensions/claude-hooks.ts"
   ],
   "lastChangelogVersion": "1.4.0",
   "defaultTools": [
     "+codemode"
+  ],
+  "skills": [
+    "/home/rjack/.claude/skills"
   ]
 }
