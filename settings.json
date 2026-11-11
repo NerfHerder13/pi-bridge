@@ -15,6 +15,7 @@
     "+codemode"
   ],
   "skills": [
-    "/home/rjack/.claude/skills"
+    "/home/rjack/.claude/skills",
+    "/home/rjack/.claude/pi/skills"
   ]
 }
