@@ -13,7 +13,10 @@
   ],
   "lastChangelogVersion": "1.4.0",
   "defaultTools": [
-    "+codemode"
+    "+codemode",
+    "+grep",
+    "+find",
+    "+ls"
   ],
   "skills": [
     "/home/rjack/.claude/skills",
