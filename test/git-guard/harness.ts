@@ -1,6 +1,6 @@
 // Drives git-guard's tools the way pi does: an SDK session on the faux model provider.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createFauxCore, fauxAssistantMessage, fauxText, fauxToolCall } from "@earendil-works/pi-ai";
@@ -14,12 +14,19 @@ mkdirSync(agentDir, { recursive: true });
 writeFileSync(join(agentDir, "git-identities.json"), JSON.stringify({ "gitlab.example.test": "tester@example.test" }));
 const globalConfig = join(root, "gitconfig");
 writeFileSync(globalConfig, "[user]\n\tname = Test User\n");
+// A stand-in for ssh: it runs git's remote command here, so `ssh://git@gitlab.example.test/<abs path>`
+// pushes to a local bare repo while git-guard still sees the host that has an identity.
+const fakeSsh = join(root, "fake-ssh");
+writeFileSync(fakeSsh, '#!/bin/sh\nfor a; do last=$a; done\nexec sh -c "$last"\n');
+chmodSync(fakeSsh, 0o755);
 
 // git-guard reads these at import time (identities file) or per call (the rest).
 process.env.PI_CODING_AGENT_DIR = agentDir;
 process.env.SUBAGENT_STATE_DIR = stateDir;
 process.env.GIT_CONFIG_GLOBAL = globalConfig;
 process.env.GIT_CONFIG_NOSYSTEM = "1";
+process.env.GIT_SSH_COMMAND = fakeSsh;
+process.env.GIT_SSH_VARIANT = "simple";
 
 const { default: gitGuard } = await import("../../extensions/git-guard/index.ts");
 
@@ -49,6 +56,18 @@ export function makeRepo(branch: string, parent = join(root, "repos")): string {
 	writeFileSync(join(dir, "a.txt"), `a ${n}\n`);
 	sh(dir, "add", ".");
 	return dir;
+}
+
+/** A bare repo seeded with `dir`'s main, added to `dir` as `name`: fetched from its path, pushed to over (fake) ssh. */
+export function addPushableRemote(dir: string, name: string): string {
+	const bare = join(root, `${name}-${n++}.git`);
+	sh(root, "init", "-q", "--bare", bare);
+	sh(dir, "push", "-q", bare, "main");
+	if (sh(dir, "remote").split("\n").includes(name)) sh(dir, "remote", "set-url", name, bare);
+	else sh(dir, "remote", "add", name, bare);
+	sh(dir, "config", `remote.${name}.pushurl`, `ssh://git@gitlab.example.test${bare}`);
+	sh(dir, "fetch", "-q", name);
+	return bare;
 }
 
 export function head(dir: string): string {
