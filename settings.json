@@ -6,6 +6,7 @@
   "enableInstallTelemetry": false,
   "enableAnalytics": false,
   "defaultProjectTrust": "never",
+  "sessionShareDestination": "gist",
   "extensions": [
     "-builtin:llama.cpp"
   ],

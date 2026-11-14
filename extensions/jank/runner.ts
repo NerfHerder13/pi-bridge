@@ -143,6 +143,8 @@ function runOnce(opts: {
 		join(extensionDir, "worker.ts"),
 		"-e",
 		join(extensionDir, "..", "git-guard", "index.ts"),
+		"-e",
+		join(extensionDir, "..", "mac-guard", "index.ts"),
 		"--no-skills",
 		"--no-prompt-templates",
 		"--no-context-files",

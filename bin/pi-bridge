@@ -4,6 +4,9 @@ PI_CONFIG_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
 export PI_CODING_AGENT_DIR="$PI_CONFIG_DIR"
 export PI_TELEMETRY=0
 unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_OAUTH_TOKEN
+# Radius (radius.pi.dev) is blocked: no API key, and /bug uploads go to a closed local port.
+unset RADIUS_API_KEY
+export PI_RADIUS_GATEWAY=http://127.0.0.1:9
 if [ -z "${PI_BIN:-}" ] && [ -f "$PI_CONFIG_DIR/.env" ]; then
   PI_BIN="$(sed -n 's/^PI_BIN=//p' "$PI_CONFIG_DIR/.env" | tail -1)"
 fi

@@ -37,6 +37,8 @@ pi ──> Bifrost (127.0.0.1:8080) ──┬──> gateway
 | `extensions/jank/` | The jank extension. It adds worker, merge, and research tools to pi. |
 | `skills/jank/`, `skills/jank-research/` | The pi skills that tell the orchestrator how to use jank. |
 | `extensions/git-guard/` | Blocks `git commit` and `git push` in the pi `bash` tool. Adds the `git_commit` and `git_push` tools. |
+| `extensions/mac-guard/` | Blocks `bash`, `write`, and `edit` calls that would delete or overwrite macOS settings: `~/Library`, `/Library`, `/Applications`, `/System`, `/etc`, `/var/db`, and settings tools such as `defaults delete`, `profiles remove`, and `security delete-*`. It also runs in jank workers. |
+| `extensions/radius-guard/` | Blocks Radius (radius.pi.dev), Earendil's hosted service: no Radius models, no `/login radius`, and no `/share` or `/bug` uploads to Radius. |
 | `skills/commit/` | The pi skill that reviews changes and writes a commit message with you. |
 | `git-identities.json` | The commit email for each git host. You make this file from `git-identities.example.json`. Do not commit it. |
 | `herdr/Containerfile` | Builds the Herdr app from source on Rocky Linux 9. |
