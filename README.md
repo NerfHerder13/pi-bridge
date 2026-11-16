@@ -79,7 +79,7 @@ Docker Desktop is not used. The installer stops if the `docker` CLI connects to 
    ```
 
 5. Install Node.js 22.18 or later, for example with `brew install node`.
-6. Make sure that `python3` works. If it does not, install the Xcode command line tools with `xcode-select --install`.
+6. Install uv, for example with `brew install uv`. The installer runs its Python steps with `uv run`.
 7. To let the installer install Herdr, install Homebrew from https://brew.sh. Homebrew is optional.
 
 ### Both workstations
