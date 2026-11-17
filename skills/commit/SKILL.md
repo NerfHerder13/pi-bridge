@@ -30,7 +30,7 @@ Wait for the answers.
 
 1. Stage the files the user agreed to, with `git add -- <paths>`. Do not stage anything else.
 2. Write the message in the style of this repository's recent messages: the same tense, capitalization, and prefixes. If there is no clear style, use a short imperative subject line under 72 characters, a blank line, and a body only when the reason for the change is not obvious from the subject.
-3. Write as the user. The message describes the change, not how it was made.
+3. Write as the user. The message describes the change, not how it was made. Then read the `unslop` skill and apply it to the message.
 4. Never add `Co-authored-by` or other trailers, "Generated with" lines, emoji, or any mention of an AI, an agent, Claude, or this tool. `git_commit` refuses such messages.
 5. Show the user the message and the staged file list. Ask for changes, and revise until they approve.
 
