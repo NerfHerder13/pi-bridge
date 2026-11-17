@@ -1044,6 +1044,8 @@ function reason(detail: string): string {
 }
 
 export default function (pi: ExtensionAPI) {
+	// Every protected path is a macOS one; elsewhere the guard only produces false positives.
+	if (process.platform !== "darwin") return;
 	pi.on("tool_call", async (event, ctx) => {
 		const input = (event.input ?? {}) as Record<string, unknown>;
 		const cwd = (ctx as { cwd?: string } | undefined)?.cwd ?? process.cwd();
