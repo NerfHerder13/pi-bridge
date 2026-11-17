@@ -44,7 +44,7 @@ pi ──> Bifrost (127.0.0.1:8080) ──┬──> gateway
 | `herdr/Containerfile` | Builds the Herdr app from source on Rocky Linux 9. |
 | `bin/pi-bridge` | Launcher. It sets `PI_CODING_AGENT_DIR` to this directory and starts pi. |
 | `SYSTEM.md` | The pi system prompt for this directory. |
-| `settings.json` | pi settings. The default model is `bifrost/auto`. The `codemode` tool is on. |
+| `settings.json` | pi settings. The default model is `bifrost/claude-sub/claude-opus-5-5`. The `codemode` tool is on. |
 | `.env` | Settings for this machine: the pi binary and the gateway files. You make this file from `.env.example`. Do not commit it. |
 | `.env.example` | A template for `.env`. |
 | `bifrost/.env`, `bridge/.env` | Secrets. `install.sh` makes them with mode 600. Do not commit them. |

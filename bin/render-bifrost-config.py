@@ -326,14 +326,19 @@ def main():
         f.write("\n")
 
     tier_limits = [limits[targets[t]] for t in TIERS] + [limits[fallback]]
-    pi_models = [{
+    # auto takes pi's thinking level only when every model it routes to by rule is a Claude subscription model.
+    auto_thinks = all(p == "claude-sub" for p, _ in [*targets.values(), fallback])
+    auto = {
         "id": "auto",
         "name": "Auto (Bifrost picks the model)",
-        "reasoning": False,
+        "reasoning": auto_thinks,
         "input": ["text"],
         "contextWindow": min(c for c, _ in tier_limits),
         "maxTokens": min(o for _, o in tier_limits),
-    }]
+    }
+    if auto_thinks:
+        auto["compat"] = {"forceAdaptiveThinking": True}
+    pi_models = [auto]
     for provider, model in every:
         context, output = limits[(provider, model)]
         entry = {

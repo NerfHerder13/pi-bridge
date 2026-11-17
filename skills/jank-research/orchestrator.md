@@ -15,8 +15,8 @@ Answer the question from primary sources: official documentation, source code, s
 Work in these steps. Keep each codemode script under 20 minutes.
 
 1. Plan. Split the question into at most 6 sub-questions. For each one, list the primary sources that own the answer and their URLs.
-2. Sweep. One script. For each sub-question and source, start a finder worker with `CLAIMS`. Alternate the finder models between `icr-gpt56-luna/gpt-5.6-luna` and `icr-gpt56-terra/gpt-5.6-terra`. Use at most 16 finders. Remove duplicate claims in the script.
-3. Verify. One script. Give each claim to two verifiers with `VERDICT`: one on whichever of `icr-gpt56-luna/gpt-5.6-luna` and `icr-gpt56-terra/gpt-5.6-terra` did not find it, and one on `icr-gemini-4-argon/gemini-4-argon`. Use only these three model IDs, exactly as written. Each verifier fetches the URL itself. Keep a claim when both verifiers say `supported: "yes"` and `primary: true`. Mark it as unverified when they disagree or say `partial`. Drop it when both say `no`.
+2. Sweep. One script. For each sub-question and source, start a finder worker with `CLAIMS`. Alternate the finder models between `icr-gpt56-luna-think/gpt-5.6-luna-responses` and `icr-gpt56-terra-think/gpt-5.6-terra-responses`. Use at most 16 finders. Remove duplicate claims in the script.
+3. Verify. One script. Give each claim to two verifiers with `VERDICT`: one on whichever of `icr-gpt56-luna-think/gpt-5.6-luna-responses` and `icr-gpt56-terra-think/gpt-5.6-terra-responses` did not find it, and one on `icr-gemini-4-argon/gemini-4-argon`. Use only these three model IDs, exactly as written. Each verifier fetches the URL itself. Keep a claim when both verifiers say `supported: "yes"` and `primary: true`. Mark it as unverified when they disagree or say `partial`. Drop it when both say `no`.
 4. Check completeness yourself. Ask what the question needs that the kept claims do not cover. If there are gaps and you ran fewer than 3 sweeps, run a sweep for the gaps only, verify its claims, and check again.
 5. Write the document.
 
