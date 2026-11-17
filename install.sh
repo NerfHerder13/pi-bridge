@@ -5,8 +5,9 @@ ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 BIFROST_IMAGE="maximhq/bifrost:v2.4.0"
 OLLAMA_IMAGE="ollama/ollama:0.40.14"
 BASIC_MEMORY_IMAGE="ghcr.io/basicmachines-co/basic-memory:1.0.0"
-HERDR_APP_VERSION="0.1.13"
+HERDR_APP_VERSION="0.1.16"
 HERDR_CORE_VERSION="0.1.18"
+CLAUDE_CODE_VERSION="2.1.325"
 NETWORK="pi-llm"
 BIFROST_NAME="bifrost-pi"
 OLLAMA_NAME="ollama-pi"
@@ -42,6 +43,7 @@ done
 
 step() { printf '\n==> %s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+py() { uv run --no-project --quiet python -I "$@"; }
 
 case "$(uname -s)" in
   Linux) OS=rhel9 ;;
@@ -57,6 +59,35 @@ fetch_pinned() {
   local url="$1" sha="$2" out="$3"
   curl -fsSLo "$out" "$url" || die "The download from $url failed."
   [ "$(sha256_of "$out")" = "$sha" ] || die "The download from $url does not match its pinned SHA-256."
+}
+claude_version() { claude --version 2>/dev/null | awk '{print $1}'; }
+version_lt() { py -c 'import sys; v=lambda s: [int(x) for x in s.split(".")]; sys.exit(0 if v(sys.argv[1]) < v(sys.argv[2]) else 1)' "$1" "$2"; }
+update_claude() {
+  local have bin prefix
+  have="$(claude_version)"
+  if ! version_lt "${have:-0}" "$CLAUDE_CODE_VERSION"; then
+    echo "Claude Code $have is installed."
+    return
+  fi
+  bin="$(readlink -f "$(command -v claude)")"
+  echo "Claude Code $have is older than $CLAUDE_CODE_VERSION. Updating it."
+  case "$bin" in
+    */lib/node_modules/@anthropic-ai/claude-code/*)
+      prefix="${bin%%/lib/node_modules/*}"
+      PATH="$prefix/bin:$PATH" npm install -g --prefix "$prefix" "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION" \
+        || die "npm could not update Claude Code in $prefix."
+      ;;
+    */Caskroom/*)
+      brew upgrade --cask claude-code || die "brew could not update Claude Code."
+      ;;
+    *)
+      claude install "$CLAUDE_CODE_VERSION" || die "'claude install $CLAUDE_CODE_VERSION' failed."
+      ;;
+  esac
+  hash -r
+  have="$(claude_version)"
+  version_lt "${have:-0}" "$CLAUDE_CODE_VERSION" && die "Claude Code is still $have after the update. Update it to $CLAUDE_CODE_VERSION or later, then run this script again."
+  echo "Updated Claude Code to $have."
 }
 with_timeout() {
   local seconds="$1"
@@ -74,7 +105,7 @@ env_set() {
 }
 
 step "Check prerequisites"
-for cmd in docker python3 openssl claude tar curl node perl; do
+for cmd in docker uv openssl claude tar curl node perl; do
   command -v "$cmd" >/dev/null || die "'$cmd' is not installed."
 done
 [ -n "$PI_BIN" ] && [ -x "$PI_BIN" ] || die "pi is not at '$PI_BIN'. Set PI_BIN in .env to the pi binary."
@@ -82,7 +113,8 @@ node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(
   || die "sub-bridge needs Node 22.18 or later. This node is $(node --version)."
 docker info >/dev/null 2>&1 || die "Docker is not running, or your user cannot use it."
 os_check
-claude auth status 2>/dev/null | python3 -I -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("loggedIn") and d.get("authMethod")=="claude.ai" else 1)' \
+update_claude
+claude auth status 2>/dev/null | py -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("loggedIn") and d.get("authMethod")=="claude.ai" else 1)' \
   || die "Claude Code is not logged in with a Claude subscription. Run 'claude auth login', then run this script again."
 NODE_BIN="$(readlink -f "$(command -v node)")"
 CLAUDE_BIN="$(readlink -f "$(command -v claude)")"
@@ -107,7 +139,7 @@ if [ ! -f "$ROOT/bifrost/routing.json" ]; then
   cp "$ROOT/bifrost/routing.example.json" "$ROOT/bifrost/routing.json"
   echo "Made bifrost/routing.json from bifrost/routing.example.json."
 fi
-NEEDS="$(python3 -I "$ROOT/bin/render-bifrost-config.py" \
+NEEDS="$(py "$ROOT/bin/render-bifrost-config.py" \
   --routing "$ROOT/bifrost/routing.json" --gateway-menu "$GATEWAY_MENU" --gateway-ca "$GATEWAY_CA_FILE" --gateway-key-header "$GATEWAY_KEY_HEADER" \
   --claude-sub-url "$SUB_URL_FOR_CONTAINERS" \
   --vk-command "!sed -n 's/^BIFROST_VK_PI=//p' $ENV_FILE" \
@@ -131,12 +163,12 @@ echo "Wrote bifrost/config.json and models.json."
 
 step "Configure pi to use Bifrost"
 if PI_CODING_AGENT_DIR="$ROOT" "$PI_BIN" list 2>/dev/null | grep -q 'pi-claude-bridge'; then
-  for src in $(python3 -I -c 'import json,sys; print(" ".join(p for p in json.load(open(sys.argv[1])).get("packages",[]) if "pi-claude-bridge" in p))' "$ROOT/settings.json"); do
+  for src in $(py -c 'import json,sys; print(" ".join(p for p in json.load(open(sys.argv[1])).get("packages",[]) if "pi-claude-bridge" in p))' "$ROOT/settings.json"); do
     PI_CODING_AGENT_DIR="$ROOT" PI_TELEMETRY=0 "$PI_BIN" remove "$src"
   done
 fi
 rm -rf "$ROOT/claude-bridge.json" "$ROOT/claude-bridge" "$ROOT/claude-bridge.log" "$ROOT/cc-cli-logs"
-python3 -I - "$ROOT" <<'EOF'
+py - "$ROOT" <<'EOF'
 import json, os, sys
 root = sys.argv[1]
 path = os.path.join(root, "settings.json")
@@ -145,7 +177,7 @@ s["packages"] = [p for p in s.get("packages", []) if "pi-claude-bridge" not in p
 if not s["packages"]:
     s.pop("packages")
 s["defaultProvider"] = "bifrost"
-s["defaultModel"] = "claude-sub/claude-opus-5-5"
+s["defaultModel"] = "auto"
 json.dump(s, open(path, "w"), indent=2)
 open(path, "a").write("\n")
 auth = os.path.join(root, "auth.json")
@@ -157,9 +189,9 @@ if os.path.exists(auth):
     else:
         os.remove(auth)
 EOF
-python3 -I -c 'import json,sys; sys.exit(1 if json.load(open(sys.argv[1])).get("packages") else 0)' "$ROOT/settings.json" && rm -rf "$ROOT/npm"
+py -c 'import json,sys; sys.exit(1 if json.load(open(sys.argv[1])).get("packages") else 0)' "$ROOT/settings.json" && rm -rf "$ROOT/npm"
 chmod 600 "$ROOT/models.json"
-python3 -I - "$ROOT/mcp.json" "http://127.0.0.1:$BIFROST_PORT/mcp/memory" "!sed -n 's/^BIFROST_VK_PI=//p' $ENV_FILE" "$MEMORY_DIR" <<'EOF'
+py - "$ROOT/mcp.json" "http://127.0.0.1:$BIFROST_PORT/mcp/memory" "!sed -n 's/^BIFROST_VK_PI=//p' $ENV_FILE" "$MEMORY_DIR" <<'EOF'
 import json, os, sys
 path, url, vk_command, memory_dir = sys.argv[1:5]
 m = json.load(open(path)) if os.path.exists(path) else {}
@@ -174,7 +206,7 @@ json.dump(m, open(path, "w"), indent=2)
 open(path, "a").write("\n")
 EOF
 chmod 600 "$ROOT/mcp.json"
-echo "pi uses provider 'bifrost'. The default model is claude-sub/claude-opus-5-5."
+echo "pi uses provider 'bifrost'. The default model is bifrost/auto."
 echo "pi reaches the memory palace through Bifrost at /mcp/memory (mcp.json)."
 
 step "Link the pi-bridge command"
@@ -209,7 +241,7 @@ curl -sf "$SUB_URL_FOR_HOST/health" >/dev/null || { os_sub_bridge_log_tail; die 
 echo "sub-bridge is listening on $SUB_URL_FOR_HOST."
 
 step "Start Ollama for the complexity classifier"
-CLASSIFIER_MODEL="$(python3 -I -c 'import json,sys; print((json.load(open(sys.argv[1])).get("classifier") or {}).get("model","tev1:0.8b"))' "$ROOT/bifrost/routing.json")"
+CLASSIFIER_MODEL="$(py -c 'import json,sys; print((json.load(open(sys.argv[1])).get("classifier") or {}).get("model","tev1:0.8b"))' "$ROOT/bifrost/routing.json")"
 docker pull -q "$OLLAMA_IMAGE" >/dev/null
 if [ "$(docker inspect -f '{{.Config.Image}}' "$OLLAMA_NAME" 2>/dev/null || true)" != "$OLLAMA_IMAGE" ]; then
   docker rm -f "$OLLAMA_NAME" >/dev/null 2>&1 || true
@@ -247,7 +279,7 @@ docker rm -f "$BIFROST_NAME" >/dev/null 2>&1 || true
 docker create --name "$BIFROST_NAME" --restart unless-stopped --network "$NETWORK" \
   -p "127.0.0.1:$BIFROST_PORT:8080" --env-file "$ENV_FILE" \
   -e APP_HOST=0.0.0.0 -e APP_PORT=8080 -v bifrost-pi-data:/app/data "$BIFROST_IMAGE" >/dev/null
-python3 -I - "$ROOT/bifrost/config.json" <<'EOF' | docker cp - "$BIFROST_NAME:/app/data/"
+py - "$ROOT/bifrost/config.json" <<'EOF' | docker cp - "$BIFROST_NAME:/app/data/"
 import io, os, sys, tarfile
 src = sys.argv[1]
 data = open(src, "rb").read()
@@ -279,7 +311,7 @@ if [ "$RUN_TEST" = 1 ]; then
   touch "$CHECKS_FILE"
   chmod 600 "$CHECKS_FILE"
   VK="$(env_get "$ENV_FILE" BIFROST_VK_PI)"
-  KEYS="$(python3 -I - "$ROOT" "$BIFROST_IMAGE" "$PI_BIN" <<'EOF'
+  KEYS="$(py - "$ROOT" "$BIFROST_IMAGE" "$PI_BIN" <<'EOF'
 import hashlib, json, os, sys
 root, image, pi_bin = sys.argv[1:4]
 def digest(*parts):
@@ -296,7 +328,7 @@ files = ["bifrost/config.json", "models.json", "settings.json", "SYSTEM.md", "br
 print(digest(image, os.path.realpath(pi_bin), *[file_hash(os.path.join(root, f)) for f in files]), "pi:bifrost/auto")
 EOF
 )"
-  REQUIRED="$(python3 -I -c 'import json,sys; r=json.load(open(sys.argv[1])); print(" ".join({*r["tiers"].values(), r.get("fallback", "claude-sub/claude-opus-5-5"), *r.get("fallbacks", [])}))' "$ROOT/bifrost/routing.json")"
+  REQUIRED="$(py -c 'import json,sys; r=json.load(open(sys.argv[1])); print(" ".join({*r["tiers"].values(), r.get("fallback", "claude-sub/claude-opus-5-5"), *r.get("fallbacks", [])}))' "$ROOT/bifrost/routing.json")"
   FAILED=""
   WARNED=""
   while read -r key model; do
@@ -307,7 +339,7 @@ EOF
     fi
     RESP="$(curl -s -m 60 "http://127.0.0.1:$BIFROST_PORT/anthropic/v1/messages" -H "x-bf-vk: $VK" -H 'anthropic-version: 2023-06-01' \
       -H 'content-type: application/json' -d "{\"model\":\"$model\",\"max_tokens\":300,\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: ok\"}]}" || true)"
-    if echo "$RESP" | python3 -I -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("content") else 1)' 2>/dev/null; then
+    if echo "$RESP" | py -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("content") else 1)' 2>/dev/null; then
       echo "$model: OK"
       echo "$key $model" >> "$CHECKS_FILE"
     else

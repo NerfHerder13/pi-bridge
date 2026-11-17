@@ -12,6 +12,7 @@
   "models": [
     "claude-sub/claude-opus-5-5",
     "claude-sub/claude-sonnet-5-5",
-    "claude-sub/claude-haiku-5-5"
+    "claude-sub/claude-haiku-5-5",
+    "claude-sub/claude-fable-5-2"
   ]
 }

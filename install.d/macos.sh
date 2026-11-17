@@ -50,7 +50,7 @@ os_install_search_tools() {
 
 os_start_sub_bridge() {
   mkdir -p "$(dirname "$LAUNCH_PLIST")" "$(dirname "$SUB_BRIDGE_LOG")"
-  python3 -I - "$LAUNCH_PLIST" "$LAUNCH_LABEL" "$NODE_BIN" "$SUB_ENV_FILE" "$ROOT/bridge/server.ts" "$SUB_BRIDGE_LOG" "$PATH" "$HOME" <<'EOF'
+  py - "$LAUNCH_PLIST" "$LAUNCH_LABEL" "$NODE_BIN" "$SUB_ENV_FILE" "$ROOT/bridge/server.ts" "$SUB_BRIDGE_LOG" "$PATH" "$HOME" <<'EOF'
 import plistlib, sys
 path, label, node, env_file, server, log, env_path, home = sys.argv[1:9]
 plistlib.dump({

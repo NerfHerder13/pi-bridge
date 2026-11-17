@@ -14,6 +14,7 @@ CLAUDE_SUB_LIMITS = {
     "claude-opus-5-5": (1000000, 128000),
     "claude-sonnet-5-5": (1000000, 128000),
     "claude-haiku-5-5": (1000000, 128000),
+    "claude-fable-5-2": (1000000, 128000),
 }
 
 

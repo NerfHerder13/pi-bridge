@@ -37,12 +37,14 @@ pi ──> Bifrost (127.0.0.1:8080) ──┬──> gateway
 | `extensions/jank/` | The jank extension. It adds worker, merge, and research tools to pi. |
 | `skills/jank/`, `skills/jank-research/` | The pi skills that tell the orchestrator how to use jank. |
 | `extensions/git-guard/` | Blocks `git commit` and `git push` in the pi `bash` tool. Adds the `git_commit` and `git_push` tools. |
+| `extensions/mac-guard/` | Blocks `bash`, `write`, and `edit` calls that would delete or overwrite macOS settings: `~/Library`, `/Library`, `/Applications`, `/System`, `/etc`, `/var/db`, and settings tools such as `defaults delete`, `profiles remove`, and `security delete-*`. It also runs in jank workers. |
+| `extensions/radius-guard/` | Blocks Radius (radius.pi.dev), Earendil's hosted service: no Radius models, no `/login radius`, and no `/share` or `/bug` uploads to Radius. |
 | `skills/commit/` | The pi skill that reviews changes and writes a commit message with you. |
 | `git-identities.json` | The commit email for each git host. You make this file from `git-identities.example.json`. Do not commit it. |
 | `herdr/Containerfile` | Builds the Herdr app from source on Rocky Linux 9. |
 | `bin/pi-bridge` | Launcher. It sets `PI_CODING_AGENT_DIR` to this directory and starts pi. |
 | `SYSTEM.md` | The pi system prompt for this directory. |
-| `settings.json` | pi settings. The default model is `bifrost/claude-sub/claude-opus-5-5`. The `codemode` tool is on. |
+| `settings.json` | pi settings. The default model is `bifrost/auto`. The `codemode` tool is on. |
 | `.env` | Settings for this machine: the pi binary and the gateway files. You make this file from `.env.example`. Do not commit it. |
 | `.env.example` | A template for `.env`. |
 | `bifrost/.env`, `bridge/.env` | Secrets. `install.sh` makes them with mode 600. Do not commit them. |
@@ -77,7 +79,7 @@ Docker Desktop is not used. The installer stops if the `docker` CLI connects to 
    ```
 
 5. Install Node.js 22.18 or later, for example with `brew install node`.
-6. Make sure that `python3` works. If it does not, install the Xcode command line tools with `xcode-select --install`.
+6. Install uv, for example with `brew install uv`. The installer runs its Python steps with `uv run`.
 7. To let the installer install Herdr, install Homebrew from https://brew.sh. Homebrew is optional.
 
 ### Both workstations
@@ -161,7 +163,7 @@ To skip all tests, run `install.sh --no-test`.
    ln -sfn "$PWD/bin/pi-bridge" ~/.local/bin/pi-bridge   # run from the repo root
    ```
 
-   The command `pi` still starts your default pi setup in `~/.pi/agent`. That setup does not use Bifrost.
+   The command `pi` still starts your default pi setup in `~/.pi/agent`. That setup does not use Bifrost. To make `pi` start `pi-bridge`, add `alias pi=pi-bridge` to your shell profile.
 
 3. To pick a model, type `/model` in pi.
 4. Select `bifrost/auto` to let Bifrost pick the model for each request.

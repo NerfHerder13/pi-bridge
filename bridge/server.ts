@@ -13,7 +13,7 @@ const CLAUDE_BIN = process.env.CLAUDE_SUB_CLAUDE_BIN || "claude";
 const IDLE_MS = Number(process.env.CLAUDE_SUB_IDLE_MS ?? String(30 * 60 * 1000));
 const MAX_BODY = 64 * 1024 * 1024;
 const MODEL_RE = /^claude-[a-z0-9-]+$/;
-const MODELS = (process.env.CLAUDE_SUB_MODELS ?? "claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5").split(",").map((m) => m.trim()).filter(Boolean);
+const MODELS = (process.env.CLAUDE_SUB_MODELS ?? "claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5,claude-fable-5-2").split(",").map((m) => m.trim()).filter(Boolean);
 const MCP_NAME = "c";
 const PREFIX = `mcp__${MCP_NAME}__`;
 const TOOL_USE_ID_META = "claudecode/toolUseId";

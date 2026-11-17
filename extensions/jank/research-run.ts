@@ -57,6 +57,8 @@ const args = [
 	join(request.extensionDir, "index.ts"),
 	"-e",
 	join(request.extensionDir, "..", "git-guard", "index.ts"),
+	"-e",
+	join(request.extensionDir, "..", "mac-guard", "index.ts"),
 	"--no-skills",
 	"--no-prompt-templates",
 	"--tools",
