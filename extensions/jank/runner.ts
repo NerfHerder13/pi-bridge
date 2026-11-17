@@ -7,6 +7,8 @@ import { validateToolArguments } from "@earendil-works/pi-ai";
 import { extensionDir } from "./paths.ts";
 
 export const DEFAULT_MODEL = "icr-gemini-4-hydrogen/gemini-4-hydrogen";
+export const THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh"] as const;
+export const DEFAULT_THINKING = process.env.JANK_THINKING || "low";
 export const READ_TOOLS = ["read", "grep", "find", "ls"];
 export const WRITE_TOOLS = ["edit", "write"];
 const ALLOWED_TOOLS = new Set([...READ_TOOLS, ...WRITE_TOOLS, "bash", "jank_fetch"]);
@@ -123,6 +125,7 @@ function runOnce(opts: {
 	tools: string[];
 	cwd: string;
 	schemaFile?: string;
+	thinking?: string;
 	timeoutMs: number;
 	signal?: AbortSignal;
 	onEvent?: (msg: string) => void;
@@ -138,6 +141,8 @@ function runOnce(opts: {
 		"--no-session",
 		"--model",
 		`bifrost/${opts.model}`,
+		"--thinking",
+		opts.thinking || DEFAULT_THINKING,
 		"--no-extensions",
 		"-e",
 		join(extensionDir, "worker.ts"),
@@ -256,6 +261,7 @@ export async function runWorker(opts: {
 	tools: string[];
 	cwd: string;
 	schema?: object;
+	thinking?: string;
 	timeoutMs: number;
 	signal?: AbortSignal;
 	onEvent?: (msg: string) => void;

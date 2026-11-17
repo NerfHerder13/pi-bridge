@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { Type } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { DEFAULT_MODEL, resolveModel, resolveTools, runWorker, workers } from "./runner.ts";
+import { DEFAULT_MODEL, DEFAULT_THINKING, THINKING_LEVELS, resolveModel, resolveTools, runWorker, workers } from "./runner.ts";
 import { launchResearch, listRuns, readRun, type ResearchRun } from "./research.ts";
 import { applyToTree, collectPatch, createWorktree, finishIntegration, mergePatches, removeWorktree, repoRoot, snapshot } from "./worktree.ts";
 
@@ -41,6 +41,7 @@ const workerTool = defineTool({
 		label: Type.Optional(Type.String({ description: "Short name for progress output and worktree names." })),
 		model: Type.Optional(Type.String({ description: `Gateway model id. Default ${DEFAULT_MODEL}.` })),
 		schema: Type.Optional(anyObject),
+		thinking: Type.Optional(Type.Union(THINKING_LEVELS.map((l) => Type.Literal(l)), { description: `Thinking level for the worker. Default ${DEFAULT_THINKING}. A model that lacks a level uses the nearest one it has.` })),
 		tools: Type.Optional(Type.Array(Type.String(), { description: "Worker tools from: read, grep, find, ls, edit, write, bash, jank_fetch. Default read, grep, find, ls; with isolation worktree also edit and write." })),
 		isolation: Type.Optional(Type.Union([Type.Literal("none"), Type.Literal("worktree")])),
 		base: Type.Optional(Type.String({ description: "Base commit from jank_snapshot. Default: a new snapshot of the working tree." })),
@@ -74,6 +75,7 @@ const workerTool = defineTool({
 					tools,
 					cwd: workCwd,
 					schema: params.schema,
+					thinking: params.thinking,
 					timeoutMs: Math.max(30, params.timeout_s ?? 600) * 1000,
 					signal,
 					onEvent: (m) => onUpdate?.({ content: [{ type: "text", text: `${label}: ${m}` }], details: undefined }),
