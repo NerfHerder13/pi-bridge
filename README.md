@@ -104,6 +104,7 @@ Docker Desktop is not used. The installer stops if the `docker` CLI connects to 
    |---|---|
    | `PI_BIN` | The path to the pi binary. If you leave it empty, the scripts use the `pi` command in your `PATH`. |
    | `GATEWAY_MENU` | The path to the gateway model menu. This is an OpenCode-format provider configuration file (JSON). |
+   | `GATEWAY_MENU_URL` | Optional. The URL where the gateway serves its menu. If you set it, `install.sh` downloads the menu to `GATEWAY_MENU` before it renders the configuration. If the download fails, it uses the copy that is already there. |
    | `GATEWAY_KEY_FILE` | The path to the file that contains your gateway key. |
    | `GATEWAY_CA_FILE` | The path to the CA certificate bundle for the gateway. Leave it empty if the gateway uses a public certificate. |
    | `GATEWAY_KEY_HEADER` | The name of an extra request header that carries the gateway key, if the gateway needs one. Leave it empty if the gateway reads the key only from `Authorization: Bearer`. |

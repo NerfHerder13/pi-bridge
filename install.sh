@@ -135,6 +135,19 @@ os_network
 echo "Network $NETWORK is ready. Containers reach sub-bridge at $SUB_URL_FOR_CONTAINERS."
 
 step "Render bifrost/config.json and models.json from bifrost/routing.json"
+if [ -n "${GATEWAY_MENU_URL:-}" ] && [ -n "$GATEWAY_MENU" ]; then
+  mkdir -p "$(dirname "$GATEWAY_MENU")"
+  MENU_TMP="$(mktemp "$GATEWAY_MENU.XXXXXX")"
+  if curl -fsS --max-time 20 ${GATEWAY_CA_FILE:+--cacert "$GATEWAY_CA_FILE"} -o "$MENU_TMP" "$GATEWAY_MENU_URL" \
+    && py -c 'import json,sys; p=json.load(open(sys.argv[1]))["config"]["provider"]; sys.exit(0 if any(v.get("models") for v in p.values()) else 1)' "$MENU_TMP" 2>/dev/null; then
+    chmod 600 "$MENU_TMP"
+    mv "$MENU_TMP" "$GATEWAY_MENU"
+    echo "Refreshed the gateway menu from $GATEWAY_MENU_URL."
+  else
+    rm -f "$MENU_TMP"
+    echo "WARNING: The gateway menu could not be refreshed from $GATEWAY_MENU_URL. Using the copy at $GATEWAY_MENU."
+  fi
+fi
 if [ ! -f "$ROOT/bifrost/routing.json" ]; then
   cp "$ROOT/bifrost/routing.example.json" "$ROOT/bifrost/routing.json"
   echo "Made bifrost/routing.json from bifrost/routing.example.json."
