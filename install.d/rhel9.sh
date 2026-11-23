@@ -17,7 +17,13 @@ os_check() {
   command -v systemctl >/dev/null || die "'systemctl' is not installed."
 }
 
+PODMAN_HOST_LOOPBACK="${PODMAN_HOST_LOOPBACK:-172.31.255.254}"
+
 os_network() {
+  if docker --version 2>/dev/null | grep -qi podman; then
+    os_network_podman
+    return
+  fi
   HOST_IP="$(docker network inspect "$NETWORK" -f '{{(index .IPAM.Config 0).Gateway}}')"
   [ -n "$HOST_IP" ] || die "Docker network $NETWORK has no gateway address."
   SUB_BIND="$HOST_IP"
@@ -25,6 +31,23 @@ os_network() {
   SUB_URL_FOR_HOST="http://$HOST_IP:$CLAUDE_SUB_PORT"
   # Run as your user so the memory files stay yours. ':z' lets SELinux allow the bind mounts.
   MEMORY_RUN_USER="$(id -u):$(id -g)"
+  MEMORY_MOUNT_OPTS=":z"
+}
+
+# Rootless podman: the network's gateway lives in podman's rootless namespace, not on the host, so sub-bridge
+# cannot bind it. sub-bridge listens on the host's 127.0.0.1 instead, and containers reach it at the address
+# pasta maps to the host loopback, set in ~/.config/containers/containers.conf:
+#   [network]
+#   pasta_options = ["--map-host-loopback", "172.31.255.254"]
+os_network_podman() {
+  grep -qs -- "--map-host-loopback\", \"$PODMAN_HOST_LOOPBACK\"" "$HOME/.config/containers/containers.conf" \
+    || die "Rootless podman needs pasta_options = [\"--map-host-loopback\", \"$PODMAN_HOST_LOOPBACK\"] under [network] in ~/.config/containers/containers.conf, so containers can reach sub-bridge."
+  SUB_BIND="127.0.0.1"
+  SUB_URL_FOR_CONTAINERS="http://$PODMAN_HOST_LOOPBACK:$CLAUDE_SUB_PORT"
+  SUB_URL_FOR_HOST="http://127.0.0.1:$CLAUDE_SUB_PORT"
+  # Root in a rootless container is your user on the host, so the memory files stay yours. Your uid may be
+  # outside the container's id range, so --user $(id -u) would not start.
+  MEMORY_RUN_USER="0:0"
   MEMORY_MOUNT_OPTS=":z"
 }
 
